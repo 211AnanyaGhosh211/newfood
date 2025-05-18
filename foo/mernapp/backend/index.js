@@ -1,8 +1,14 @@
+const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors'); // ✅ Add this
+
+dotenv.config();
+
+
 const mongoDB = require('./db');
 const app = express();
 const port = 3000;
+
 
 // ✅ Use cors middleware
 app.use(cors({
@@ -21,6 +27,9 @@ mongoDB().then(() => {
     // Make sure this path is correct
     app.use('/api', require('./Routes/DisplayData'));
     app.use('/api', require('./Routes/OrderData'));
+    app.get('/api/config/paypal', (req, res) => {
+        res.send(process.env.PAYPAL_CLIENT_ID);
+    });
 
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
