@@ -1,8 +1,11 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import DeleteIcon from '@mui/icons-material/Delete';
 
 import { useCart, useDispatchCart } from '../ContextReducer';
+
 export default function Cart() {
+  let navigate = useNavigate();
   let data = useCart();
   let dispatch = useDispatchCart();
   if (data.length === 0) {
@@ -12,14 +15,10 @@ export default function Cart() {
       </div>
     )
   }
-  
 
   const handleCheckOut = async () => {
     let userEmail = localStorage.getItem("userEmail");
-    // console.log(data,localStorage.getItem("userEmail"),new Date())
     let response = await fetch("http://localhost:3000/api/orderData", {
-      // credentials: 'include',
-      // Origin:"http://localhost:3000/login",
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -30,9 +29,27 @@ export default function Cart() {
         order_date: new Date().toDateString()
       })
     });
-    console.log("JSON RESPONSE:::::", response.status)
-    if (response.status === 200) {
-      dispatch({ type: "DROP" })
+    console.log("Order response:", response.status);
+    return response;
+  }
+
+  const createOrder = (data, actions) => {
+    return actions.order.create({
+      purchase_units: [{
+        amount: {
+          value: totalPrice.toString()
+        }
+      }]
+    });
+  }
+
+  const onApprove = async (data, actions) => {
+    const order = await handleCheckOut();
+    if (order.status === 200) {
+      dispatch({ type: "DROP" });
+      alert('Payment successful! Your order has been placed.');
+    } else {
+      alert('Payment failed. Please try again.');
     }
   }
 
@@ -68,14 +85,12 @@ export default function Cart() {
         </table>
         <h1 className='fs-2' style={{ color: 'white' }}>Total Price: {totalPrice}/-</h1>
 
-
-        <div>
-          <button className='btn bg-success mt-5 ' onClick={handleCheckOut} > Check Out </button>
+        <div className='mt-5'>
+          <button className='btn btn-success' onClick={() => navigate('/checkout')}>
+            Proceed to Checkout
+          </button>
         </div>
       </div>
- 
-
-
     </div>
   )
 } 
