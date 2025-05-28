@@ -19,9 +19,17 @@ function App() {
     <CartProvider>
       <PayPalScriptProvider 
         options={{
-          "client-id": "YOUR_PAYPAL_CLIENT_ID",
-          "components": "buttons"
+          "client-id": "sb",
+          "currency": "USD",
+          "intent": "capture",
+          "disable-funding": "credit",
+          "components": "buttons",
+          "vault": false,
+          "commit": true,
+          "debug": true,
+          "locale": "en_US"
         }}
+      >
       >
         <Router>
           <div>
@@ -39,3 +47,4 @@ function App() {
 }
 
 export default App;
+

@@ -205,7 +205,8 @@ export default function Checkout() {
                     layout: 'vertical',
                     color: 'blue',
                     shape: 'pill',
-                    label: 'paypal'
+                    label: 'paypal',
+                    tagline: false
                   }}
                 />
               )}
