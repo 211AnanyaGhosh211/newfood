@@ -27,9 +27,12 @@ function App() {
           "vault": false,
           "commit": true,
           "debug": true,
-          "locale": "en_US"
+          "locale": "en_US",
+          "buyer-country": "US",
+          "merchant-country": "US",
+          "allowed-country-codes": ["US", "GB", "CA"],
+          "disable-card": true
         }}
-      >
       >
         <Router>
           <div>
