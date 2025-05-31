@@ -3,12 +3,12 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 const CartStateContext = createContext();
 const cartDispatchContext = createContext();
 
-const reducer = (state, action) => {
+const reducer = (state = [], action) => {
   switch (action.type) {
     case "LOAD":
       return action.payload || [];
     case "ADD":
-      // Always add with quantity 1
+      // Add item with quantity 1
       const newState = [...state, { 
         id: action.id, 
         name: action.name, 
@@ -28,7 +28,7 @@ const reducer = (state, action) => {
       const itemIndex = arr.findIndex(food => food.id === action.id);
       if (itemIndex !== -1) {
         const basePrice = arr[itemIndex].basePrice || parseInt(action.price);
-        // Always update with the exact quantity provided
+        // Update with the exact quantity from controls
         const updatedItem = {
           ...arr[itemIndex],
           qty: parseInt(action.qty),
@@ -49,12 +49,21 @@ const reducer = (state, action) => {
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, []);
 
+  // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
       dispatch({ type: "LOAD", payload: JSON.parse(savedCart) });
     }
   }, []);
+
+  return (
+    <cartDispatchContext.Provider value={dispatch}>
+      <CartStateContext.Provider value={state}>
+        {children}
+      </CartStateContext.Provider>
+    </cartDispatchContext.Provider>
+  );
 
   return (
     <cartDispatchContext.Provider value={dispatch}>

@@ -8,39 +8,61 @@ function Card(props) {
   const priceRef = useRef();
   let options = props.options;
   let priceOptions = Object.keys(options);
+  const userEmail = localStorage.getItem('userEmail');
 
   // Initialize qty with existing cart quantity if item exists
   const [qty, setQty] = useState(() => {
+    if (!data) return 1;
     const existingItem = data.find(item => item.id === props.foodItem._id);
     return existingItem ? existingItem.qty : 1;
   });
+  // Initialize showControls based on cart state
+  const [showControls, setShowControls] = useState(() => {
+    if (!data) return false;
+    const existingItem = data.find(item => item.id === props.foodItem._id);
+    return !!existingItem; // Show controls if item exists in cart
+  });
   const [size, setSize] = useState("");
-  const [showControls, setShowControls] = useState(false);
 
   // Function to handle adding to cart
   const handleAddToCart = async () => {
-    let food = data.find(item => item.id === props.foodItem._id);
-    
-    if (food) {
-      // If item exists in cart, update it with a fixed quantity of 1
-      await dispatch({
-        type: "UPDATE",
-        id: props.foodItem._id,
-        price: parseInt(options[size]),
-        qty: food.qty + 1, // Always add 1
-        size: size
-      });
-    } else {
-      // If item doesn't exist, add it with a fixed quantity of 1
+    if (!data) {
+      // If cart is null, add item with qty 1
       await dispatch({
         type: "ADD",
         id: props.foodItem._id,
         name: props.foodItem.name,
         price: parseInt(options[size]),
-        qty: 1, // Always start with 1
+        qty: 1,
+        size: size
+      });
+      setShowControls(true);
+      return;
+    }
+
+    // If cart exists, check if item already exists
+    const existingItem = data.find(item => item.id === props.foodItem._id);
+    if (existingItem) {
+      // If item exists, update it with qty 1
+      await dispatch({
+        type: "UPDATE",
+        id: props.foodItem._id,
+        price: parseInt(options[size]),
+        qty: 1,
+        size: size
+      });
+    } else {
+      // If item doesn't exist, add it with qty 1
+      await dispatch({
+        type: "ADD",
+        id: props.foodItem._id,
+        name: props.foodItem.name,
+        price: parseInt(options[size]),
+        qty: 1,
         size: size
       });
     }
+    setShowControls(true);
   }
 
   // Function to handle quantity changes
@@ -64,17 +86,26 @@ function Card(props) {
     setShowControls(false);
     // Reset quantity to 1 after deletion
     setQty(1);
+    // Re-enable the Add to Cart button
+    setShowControls(false);
   }
 
   useEffect(() => {
     setSize(priceRef.current.value)
-    // Update qty when cart data changes
+    // Update qty and showControls when cart data changes
+    if (!data) {
+      setQty(1);
+      setShowControls(false);
+      return;
+    }
+    
     const existingItem = data.find(item => item.id === props.foodItem._id);
     if (existingItem) {
       setQty(existingItem.qty);
+      setShowControls(true); // Show controls if item exists in cart
     } else {
-      // Reset to 1 if item is not in cart
       setQty(1);
+      setShowControls(false); // Hide controls if item is not in cart
     }
   }, [data]);
 
@@ -97,10 +128,16 @@ function Card(props) {
           </div>
           <hr></hr>
           <div className="d-flex justify-content-between align-items-center">
-            <button className="btn btn-success justify-center ms-2" onClick={() => {
-              setShowControls(true);
-              handleAddToCart();
-            }}>Add To Cart</button>
+            <button className="btn btn-success justify-center ms-2"
+              onClick={() => {
+                setShowControls(true);
+                handleAddToCart();
+              }}
+              disabled={showControls}
+              style={{ cursor: showControls ? 'not-allowed' : 'pointer' }}
+            >
+              {showControls ? 'Added' : 'Add To Cart'}
+            </button>
             {showControls && (
               <div className="d-flex align-items-center">
                 <button className="btn btn-danger" onClick={handleDelete}>

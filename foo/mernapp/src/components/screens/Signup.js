@@ -1,7 +1,8 @@
 import React ,{useState} from 'react'
-import {Link} from 'react-router-dom'
+import {Link,useNavigate} from 'react-router-dom'
 function Signup() {
-  const [credentials, setCredentials] = useState({name:"",email:"",password:"",Geolocation:""})
+  const [credentials, setCredentials] = useState({ name: "", email: "", password: "", Geolocation: "" })
+  const navigate = useNavigate();
 const handleSubmit = async (e) => {
   e.preventDefault();
   const response= await fetch("http://localhost:3000/api/createuser",{
@@ -20,6 +21,9 @@ const handleSubmit = async (e) => {
   console.log(json);
   if(!json.success){
     alert("Enter valid credentials")
+  }
+  else {
+    navigate('/login');
   }
 }
 
@@ -54,7 +58,7 @@ const onChange = (e) => {
   </div>
   
   <button type="submit" className="m-3 btn btn-success">Submit</button>
-  <Link to="/login" className="m-3 btn btn-danger">Already have an account</Link>
+  {/* <Link to="/login" className="m-3 btn btn-danger">Already have an account</Link> */}
 </form>
 </div>
 

@@ -6,6 +6,8 @@ import Card from "../Card";
 import burger from "./image/burger.jpg";
 import pastry from "./image/pastry.jpg";
 import barbeque from "./image/barbeque.jpg";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
 
 function Home() {
   const [search, setSearch] = useState("");
@@ -41,9 +43,12 @@ function Home() {
       >
         <div className="carousel-inner" id="carousel">
           <div className="carousel-caption" style={{ zIndex: "10" }}>
-            <div className="d-flex justify-content-center">
+            <div className="input-group">
+              <span className="input-group-text">
+                <FontAwesomeIcon icon={faSearch} />
+              </span>
               <input
-                className="form-control mr-sm-2"
+                className="form-control"
                 type="search"
                 placeholder="Search"
                 aria-label="Search"

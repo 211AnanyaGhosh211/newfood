@@ -13,7 +13,7 @@ function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("authtoken"));
 
   // Calculate total quantity of all items in cart
-  const totalQuantity = data.reduce((total, item) => total + item.qty, 0);
+  const totalQuantity = Array.isArray(data) ? data.reduce((total, item) => total + item.qty, 0) : 0;
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -25,6 +25,8 @@ function Navbar() {
   }, []);
 
   const handleLogout = () => {
+    // Trigger logout event to clear cart
+    window.dispatchEvent(new Event('logout'));
     localStorage.removeItem("authToken");
     setIsLoggedIn(false); // update state manually since localStorage event won't trigger
     navigate("/login");
