@@ -1,11 +1,13 @@
 import {BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css';
 import '../node_modules/bootstrap/dist/js/bootstrap.bundle.min.js';
+import '@fortawesome/fontawesome-free/css/all.css'
 import './App.css';
 import Home from './components/screens/Home';
 import Login from './components/screens/Login';
 import Signup from './components/screens/Signup';
 import Checkout from './components/screens/Checkout';
+
 
 import React, { useContext } from 'react';
 import { CartProvider } from './components/ContextReducer';

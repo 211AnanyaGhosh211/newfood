@@ -4,11 +4,16 @@ import Modal from "../Modal";
 import Badge from "react-bootstrap/Badge";
 import Cart from "./screens/Cart";
 import { useCart } from "./ContextReducer";
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+
 function Navbar() {
   let data = useCart();
   const [cartView, setCartView] = useState(false);
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("authtoken"));
+
+  // Calculate total quantity of all items in cart
+  const totalQuantity = data.reduce((total, item) => total + item.qty, 0);
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -82,8 +87,8 @@ function Navbar() {
                   className="btn btn-outline-light text-success bg-white mx-1"
                   onClick={() => setCartView(true)}
                 >
-                  My Cart {" "}
-                  <Badge pill bg="danger">{data.length}</Badge>
+                  <ShoppingCartIcon style={{ color: 'success' }} /> {" "}
+                  <Badge pill bg="danger">{totalQuantity}</Badge>
 
                 </button>
                 {cartView ? <Modal onClose={()=>setCartView(false)}><Cart /></Modal>:null}

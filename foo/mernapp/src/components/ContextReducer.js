@@ -5,19 +5,20 @@ const reducer = (state,action)=>{
 switch(action.type){
   case "ADD":
     return [...state, {id:action.id, name: action.name, price: action.price, qty: action.qty, size: action.size}]
-  case "REMOVE":
-    let newArr = [...state]
-    newArr.splice(action.index,1)
-    return newArr;
+  case "DELETE":
+    return state.filter(item => item.id !== action.id);
   case "UPDATE":
-    let arr = [...state]
-  arr.find((food, index) => {
-    if (food.id === action.id) {
-      console.log(food.qty, parseInt(action.qty), action.price + food.price);
-      arr[index] = { ...food, qty: parseInt(action.qty) + food.qty, price: action.price + food.price };
+    let arr = [...state];
+    const itemIndex = arr.findIndex(food => food.id === action.id);
+    if (itemIndex !== -1) {
+      const updatedItem = {
+        ...arr[itemIndex],
+        qty: parseInt(action.qty),
+        price: parseInt(action.price) * parseInt(action.qty)
+      };
+      arr[itemIndex] = updatedItem;
     }
-  });
-  return arr;
+    return arr;
   case "DROP":
     return []
   default:

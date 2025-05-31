@@ -1,44 +1,68 @@
 
-import React , {useEffect, useRef, useState} from 'react';
-import { useDispatchCart ,useCart } from './ContextReducer';
+import React, { useEffect, useRef, useState } from 'react';
+import { useDispatchCart, useCart } from './ContextReducer';
 
-import dish1 from "./screens/image/dish1.jpg";
 function Card(props) {
   let dispatch = useDispatchCart();
-let data = useCart(); 
-const priceRef= useRef();
-let options = props.options;
-let priceOptions = Object.keys(options);
+  let data = useCart();
+  const priceRef = useRef();
+  let options = props.options;
+  let priceOptions = Object.keys(options);
 
-const [qty, setQty] = useState(1);
-const [size, setSize] = useState("");
-const handleAddToCart = async () => {
- let food = []
- for (const item of data){
-  if(item.id ===props.foodItem._id){
-    food = item;
-    break;
-  }
+  const [qty, setQty] = useState(1);
+  const [size, setSize] = useState("");
+  const [showControls, setShowControls] = useState(false);
+
+  // Function to handle adding to cart
+  const handleAddToCart = async () => {
+    let food = data.find(item => item.id === props.foodItem._id);
     
- }
- if (food.length === 0){
-  if (food.size === size){
-    await dispatch({type:"UPDATE",id:props.foodItem._id,price:finalPrice,qty:qty})
-    return;
-  } else if (food.size !== size){
-  await dispatch({type:"ADD",id:props.foodItem._id,name:props.foodItem.name,price:finalPrice,qty:qty,size:size})
-  return;
+    if (food) {
+      // If item exists in cart, update it
+      await dispatch({
+        type: "UPDATE",
+        id: props.foodItem._id,
+        price: parseInt(options[size]),
+        qty: qty,
+        size: size
+      });
+    } else {
+      // If item doesn't exist, add it
+      await dispatch({
+        type: "ADD",
+        id: props.foodItem._id,
+        name: props.foodItem.name,
+        price: parseInt(options[size]),
+        qty: qty,
+        size: size
+      });
+    }
   }
- }
- await dispatch({type:"ADD",id:props.foodItem._id,name:props.foodItem.name,price:finalPrice,qty:qty,size:size})
 
-}
+  // Function to handle quantity changes
+  const handleQuantityChange = async (newQty) => {
+    setQty(newQty);
+    await dispatch({
+      type: "UPDATE",
+      id: props.foodItem._id,
+      price: parseInt(options[size]),
+      qty: newQty,
+      size: size
+    });
+  }
 
+  // Function to handle delete
+  const handleDelete = async () => {
+    await dispatch({
+      type: "DELETE",
+      id: props.foodItem._id
+    });
+    setShowControls(false);
+  }
 
-let finalPrice = qty*parseInt(options[size]);
-useEffect(()=>{
-  setSize(priceRef.current.value)
-},[])
+  useEffect(() => {
+    setSize(priceRef.current.value)
+  }, []);
 
   return (
     <div>
@@ -50,21 +74,30 @@ useEffect(()=>{
             This is some important text
           </p>
           <div className="container w-100">
-            <select className="m-2 h-100 bg-success rounded" onChange={(e)=>setQty(e.target.value)}>
-              {Array.from(Array(6), (e, i) => (
-                <option key={i + 1} value={i + 1}>{i + 1}</option>
-              ))}
-            </select>
-            <select className="m-2 h-100 bg-success rounded" ref={priceRef} onChange={(e)=>setSize(e.target.value)}>
-             {priceOptions.map((data) => {
+            <select className="m-2 h-100 bg-success rounded" ref={priceRef} onChange={(e) => setSize(e.target.value)}>
+              {priceOptions.map((data) => {
                 return <option key={data} value={data}>{data}</option>
-              })
-             }
+              })}
             </select>
-            <div className="d-inline h-100 fs-5">{finalPrice}</div>
+            <div className="d-inline h-100 fs-5">{options[size]}</div>
           </div>
           <hr></hr>
-          <button className="btn btn-success justify-center ms-2" onClick={handleAddToCart}>Add To Cart</button>
+          <div className="d-flex justify-content-between align-items-center">
+            <button className="btn btn-success justify-center ms-2" onClick={() => {
+              setShowControls(true);
+              handleAddToCart();
+            }}>Add To Cart</button>
+            {showControls && (
+              <div className="d-flex align-items-center">
+                <button className="btn btn-danger" onClick={handleDelete}>
+                  <i className="fas fa-trash"></i>
+                </button>
+                <button className="btn btn-success" onClick={() => handleQuantityChange(Math.max(1, qty - 1))}>-</button>
+                <span className="mx-2">{qty}</span>
+                <button className="btn btn-success" onClick={() => handleQuantityChange(qty + 1)}>+</button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
