@@ -53,7 +53,11 @@ export default function Cart() {
     }
   }
 
-  let totalPrice = data.reduce((total, food) => total + Number(food.price), 0);
+  let totalPrice = data.reduce((total, food) => {
+    // Calculate price based on base price and quantity
+    const basePrice = food.basePrice || food.price / food.qty;
+    return total + (basePrice * food.qty);
+  }, 0);
 
   return (
     <div>
@@ -79,7 +83,7 @@ export default function Cart() {
                 <td>{food.qty}</td>
                 <td>{food.size}</td>
                 <td>{food.price}</td>
-                <td ><button type="button" className="btn p-0"><DeleteIcon onClick={() => { dispatch({ type: "REMOVE", index: index }) }} /></button> </td></tr>
+                <td ><button type="button" className="btn p-0"><DeleteIcon onClick={() => { dispatch({ type: "DELETE", id: food.id }) }} /></button> </td></tr>
             ))}
           </tbody>
         </table>

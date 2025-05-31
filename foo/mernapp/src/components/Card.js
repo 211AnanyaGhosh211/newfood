@@ -9,7 +9,11 @@ function Card(props) {
   let options = props.options;
   let priceOptions = Object.keys(options);
 
-  const [qty, setQty] = useState(1);
+  // Initialize qty with existing cart quantity if item exists
+  const [qty, setQty] = useState(() => {
+    const existingItem = data.find(item => item.id === props.foodItem._id);
+    return existingItem ? existingItem.qty : 1;
+  });
   const [size, setSize] = useState("");
   const [showControls, setShowControls] = useState(false);
 
@@ -18,22 +22,22 @@ function Card(props) {
     let food = data.find(item => item.id === props.foodItem._id);
     
     if (food) {
-      // If item exists in cart, update it
+      // If item exists in cart, update it with a fixed quantity of 1
       await dispatch({
         type: "UPDATE",
         id: props.foodItem._id,
         price: parseInt(options[size]),
-        qty: qty,
+        qty: food.qty + 1, // Always add 1
         size: size
       });
     } else {
-      // If item doesn't exist, add it
+      // If item doesn't exist, add it with a fixed quantity of 1
       await dispatch({
         type: "ADD",
         id: props.foodItem._id,
         name: props.foodItem.name,
         price: parseInt(options[size]),
-        qty: qty,
+        qty: 1, // Always start with 1
         size: size
       });
     }
@@ -58,11 +62,21 @@ function Card(props) {
       id: props.foodItem._id
     });
     setShowControls(false);
+    // Reset quantity to 1 after deletion
+    setQty(1);
   }
 
   useEffect(() => {
     setSize(priceRef.current.value)
-  }, []);
+    // Update qty when cart data changes
+    const existingItem = data.find(item => item.id === props.foodItem._id);
+    if (existingItem) {
+      setQty(existingItem.qty);
+    } else {
+      // Reset to 1 if item is not in cart
+      setQty(1);
+    }
+  }, [data]);
 
   return (
     <div>
