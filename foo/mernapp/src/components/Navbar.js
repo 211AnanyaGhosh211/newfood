@@ -5,6 +5,7 @@ import Badge from "react-bootstrap/Badge";
 import Cart from "./screens/Cart";
 import { useCart } from "./ContextReducer";
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import Logout from './screens/Logout';
 
 function Navbar() {
   let data = useCart();
@@ -25,11 +26,7 @@ function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    // Trigger logout event to clear cart
-    window.dispatchEvent(new Event('logout'));
-    localStorage.removeItem("authToken");
-    setIsLoggedIn(false); // update state manually since localStorage event won't trigger
-    navigate("/login");
+    navigate('/logout');
   };
 
   return (

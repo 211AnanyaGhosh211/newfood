@@ -7,6 +7,7 @@ import Home from './components/screens/Home';
 import Login from './components/screens/Login';
 import Signup from './components/screens/Signup';
 import Checkout from './components/screens/Checkout';
+import Logout from './components/screens/Logout';
 
 
 import React, { useContext } from 'react';
@@ -43,6 +44,7 @@ function App() {
               <Route exact path="/login" element={<Login />} />
               <Route exact path="/createuser" element={<Signup />} />
               <Route exact path="/checkout" element={<Checkout />} />
+              <Route exact path="/logout" element={<Logout />} />
             </Routes>
           </div>
         </Router>

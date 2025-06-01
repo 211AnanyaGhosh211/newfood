@@ -4,6 +4,15 @@ const CartStateContext = createContext();
 const cartDispatchContext = createContext();
 
 const reducer = (state = [], action) => {
+  const userEmail = localStorage.getItem('userEmail');
+  const cartKey = userEmail ? `cart_${userEmail}` : 'cart';
+
+  // Clear cart when user logs out
+  if (action.type === 'LOGOUT') {
+    localStorage.removeItem(cartKey);
+    return [];
+  }
+
   switch (action.type) {
     case "LOAD":
       return action.payload || [];
@@ -17,11 +26,11 @@ const reducer = (state = [], action) => {
         size: action.size,
         basePrice: parseInt(action.price)
       }];
-      localStorage.setItem('cart', JSON.stringify(newState));
+      localStorage.setItem(cartKey, JSON.stringify(newState));
       return newState;
     case "DELETE":
       const newStates = state.filter(item => item.id !== action.id);
-      localStorage.setItem('cart', JSON.stringify(newStates));
+      localStorage.setItem(cartKey, JSON.stringify(newStates));
       return newStates;
     case "UPDATE":
       let arr = [...state];
@@ -36,10 +45,13 @@ const reducer = (state = [], action) => {
         };
         arr[itemIndex] = updatedItem;
       }
-      localStorage.setItem('cart', JSON.stringify(arr));
+      localStorage.setItem(cartKey, JSON.stringify(arr));
       return arr;
     case "DROP":
-      localStorage.removeItem('cart');
+      localStorage.removeItem(cartKey);
+      return [];
+    case "LOGOUT":
+      localStorage.removeItem(cartKey);
       return [];
     default:
       return state;
@@ -48,22 +60,25 @@ const reducer = (state = [], action) => {
 
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, []);
+  const userEmail = localStorage.getItem('userEmail');
+  const cartKey = userEmail ? `cart_${userEmail}` : 'cart';
 
-  // Load cart from localStorage on mount
+  // Load cart data
   useEffect(() => {
-    const savedCart = localStorage.getItem('cart');
+    const savedCart = localStorage.getItem(cartKey);
     if (savedCart) {
       dispatch({ type: "LOAD", payload: JSON.parse(savedCart) });
     }
-  }, []);
+  }, [userEmail]);
 
-  return (
-    <cartDispatchContext.Provider value={dispatch}>
-      <CartStateContext.Provider value={state}>
-        {children}
-      </CartStateContext.Provider>
-    </cartDispatchContext.Provider>
-  );
+  // Clear cart when user logs out
+  useEffect(() => {
+    return () => {
+      if (!userEmail) {
+        localStorage.removeItem(cartKey);
+      }
+    };
+  }, [userEmail]);
 
   return (
     <cartDispatchContext.Provider value={dispatch}>
@@ -76,3 +91,12 @@ export const CartProvider = ({ children }) => {
 
 export const useCart = () => useContext(CartStateContext);
 export const useDispatchCart = () => useContext(cartDispatchContext);
+
+// Function to refresh cart data
+// Function to refresh cart data
+export const refreshCart = () => {
+  const userEmail = localStorage.getItem('userEmail');
+  const cartKey = userEmail ? `cart_${userEmail}` : 'cart';
+  const savedCart = localStorage.getItem(cartKey);
+  return savedCart ? JSON.parse(savedCart) : [];
+}

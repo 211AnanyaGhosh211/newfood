@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { Link ,useNavigate} from "react-router-dom";
+import { refreshCart, useDispatchCart } from '../ContextReducer';
+
 function Login() {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   let navigate = useNavigate();
+  const dispatch = useDispatchCart();
   const handleSubmit = async (e) => {
     e.preventDefault();
     const response = await fetch("http://localhost:3000/api/loginuser", {
@@ -16,13 +19,21 @@ function Login() {
       }),
     });
     const json = await response.json();
-    console.log(json);
+    console.log('Login Response:', json);
     if (!json.success) {
       alert("Enter valid credentials");
     }
     if (json.success) {
       localStorage.setItem("authtoken", json.authtoken);
-      console.log(localStorage.getItem("authtoken"));
+      localStorage.setItem("userId", json.userId); // Store userId from API response
+      localStorage.setItem("userEmail", credentials.email);
+      console.log('Stored userId:', localStorage.getItem('userId'));
+      
+      // Refresh cart data and dispatch it
+      
+      const cartData = refreshCart();
+      dispatch({ type: "LOAD", payload: cartData });
+      
       navigate("/");
     }
   };

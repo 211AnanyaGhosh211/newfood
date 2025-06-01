@@ -1,13 +1,20 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import { useCart, useDispatchCart } from '../ContextReducer';
+import { useCart, useDispatchCart, refreshCart } from '../ContextReducer';
 
 export default function Cart() {
   let navigate = useNavigate();
-  let data = useCart();
   let dispatch = useDispatchCart();
+  
+  // Refresh cart data on component mount
+  useEffect(() => {
+    const cartData = refreshCart();
+    dispatch({ type: "LOAD", payload: cartData });
+  }, [dispatch]);
+
+  let data = useCart();
   if (data.length === 0) {
     return (
       <div>
