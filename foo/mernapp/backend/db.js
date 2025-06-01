@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const mongoURI = 'mongodb+srv://bwubta21211:Ananya%402002@cluster0.crcypux.mongodb.net/grabYourFood?retryWrites=true&w=majority&appName=Cluster0';
+const mongoURI = process.env.MONGODB_URI;
 
 const mongoDB = async () => {
     try {

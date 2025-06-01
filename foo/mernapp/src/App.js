@@ -8,7 +8,7 @@ import Login from './components/screens/Login';
 import Signup from './components/screens/Signup';
 import Checkout from './components/screens/Checkout';
 import Logout from './components/screens/Logout';
-
+import ForgotPassword from './components/screens/ForgotPassword.js';
 
 import React, { useContext } from 'react';
 import { CartProvider } from './components/ContextReducer';
@@ -45,6 +45,7 @@ function App() {
               <Route exact path="/createuser" element={<Signup />} />
               <Route exact path="/checkout" element={<Checkout />} />
               <Route exact path="/logout" element={<Logout />} />
+              <Route exact path="/resetpassword" element={<ForgotPassword />} />
             </Routes>
           </div>
         </Router>

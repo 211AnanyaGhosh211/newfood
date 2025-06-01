@@ -76,6 +76,9 @@ function Login() {
               onChange={onChange}
               id="exampleInputPassword1"
             />
+            <Link to="/resetpassword" className="m-3">
+              Forgot password?
+            </Link>
           </div>
           
 
