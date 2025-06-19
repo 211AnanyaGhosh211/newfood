@@ -1,21 +1,24 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import DeleteIcon from '@mui/icons-material/Delete';
-import { toast } from 'react-toastify';
-
-import { useCart, useDispatchCart, refreshCart } from '../ContextReducer';
+import DeleteIcon from '@mui/icons-material/Delete'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from '@mui/material'
+import { toast } from 'react-toastify'
+import { useCart, useDispatchCart, refreshCart } from '../ContextReducer'
 
 export default function Cart() {
-  let navigate = useNavigate();
-  let dispatch = useDispatchCart();
-  
+  let navigate = useNavigate()
+  let dispatch = useDispatchCart()
+  const [openModal, setOpenModal] = useState(false)
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false)
+  const [orderId, setOrderId] = useState(null)
+
   // Refresh cart data on component mount
   useEffect(() => {
-    const cartData = refreshCart();
-    dispatch({ type: "LOAD", payload: cartData });
-  }, [dispatch]);
+    const cartData = refreshCart()
+    dispatch({ type: "LOAD", payload: cartData })
+  }, [dispatch])
 
-  let data = useCart();
+  let data = useCart()
   if (data.length === 0) {
     return (
       <div>
@@ -25,7 +28,7 @@ export default function Cart() {
   }
 
   const handleCheckOut = async () => {
-    let userEmail = localStorage.getItem("userEmail");
+    let userEmail = localStorage.getItem("userEmail")
     let response = await fetch("http://localhost:3000/api/orderData", {
       method: 'POST',
       headers: {
@@ -36,12 +39,10 @@ export default function Cart() {
         email: userEmail,
         order_date: new Date().toDateString()
       })
-    });
-    console.log("Order response:", response.status);
-    return response;
+    })
+    console.log("Order response:", response.status)
+    return response
   }
-
-
 
   let totalPrice = data.reduce((total, food) => {
     // Calculate price based on base price and quantity
@@ -50,67 +51,79 @@ export default function Cart() {
   }, 0);
 
   const handleOrderPlacement = async () => {
-    if (window.confirm('Are you sure you want to place this order?')) {
-      try {
-        let userEmail = localStorage.getItem("userEmail");
-        
-        // First create the order with pending status
-        let response = await fetch("http://localhost:3000/api/orderData", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            order_data: data,
-            email: userEmail,
-            order_date: new Date().toDateString(),
-            total_amount: totalPrice
-          })
-        });
+    setOpenModal(true)
+  }
 
-        if (!response.ok) {
-          throw new Error('Failed to create order');
-        }
+  const handleConfirmOrder = async () => {
+    try {
+      let userEmail = localStorage.getItem("userEmail")
+      
+      let response = await fetch("http://localhost:3000/api/orderData", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          order_data: data,
+          email: userEmail,
+          order_date: new Date().toDateString(),
+          total_amount: totalPrice
+        })
+      })
 
-        // Show payment confirmation modal
-        const paymentConfirmation = window.confirm(`
-          Your order has been created successfully!\n\n
-          Order Amount: ₹${totalPrice}\n
-          Please contact our customer support at +91 1234567890 to make the payment.\n
-          After payment, click "Confirm Payment" to update your order status.
-        `);
-
-        if (paymentConfirmation) {
-          // Process payment and update status
-          const paymentResponse = await fetch("http://localhost:3000/api/processPayment", {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              email: userEmail,
-              order_id: new Date().toDateString(), // Using order_date as ID
-              total_amount: totalPrice
-            })
-          });
-
-          if (paymentResponse.ok) {
-            dispatch({ type: "DROP" });
-            toast.success('Order placed and payment confirmed!');
-            navigate('/orders');
-          } else {
-            toast.error('Payment confirmation failed. Please try again.');
-          }
-        } else {
-          toast.warning('Order created but payment not confirmed. Please complete payment later.');
-          dispatch({ type: "DROP" });
-          navigate('/orders');
-        }
-      } catch (error) {
-        console.error('Error placing order:', error);
-        toast.error('An error occurred. Please try again.');
+      if (!response.ok) {
+        throw new Error('Failed to create order')
       }
+
+      const orderData = await response.json()
+      setOrderId(orderData.order_id)
+      setPaymentModalOpen(true)
+      setOpenModal(false)
+    } catch (error) {
+      console.error('Error placing order:', error)
+      toast.error('An error occurred. Please try again.')
+      setOpenModal(false)
     }
+  }
+
+  const handlePaymentConfirm = async () => {
+    try {
+      let userEmail = localStorage.getItem("userEmail")
+      
+      const paymentResponse = await fetch("http://localhost:3000/api/processPayment", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: userEmail,
+          order_id: orderId,
+          total_amount: totalPrice
+        })
+      })
+
+      if (paymentResponse.ok) {
+        dispatch({ type: "DROP" })
+        toast.success('Order placed and payment confirmed!')
+        navigate('/orders')
+      } else {
+        toast.error('Payment confirmation failed. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error confirming payment:', error)
+      toast.error('An error occurred while confirming payment. Please try again.')
+    } finally {
+      setPaymentModalOpen(false)
+    }
+  }
+
+  const handleCloseModal = () => {
+    setOpenModal(false)
+  }
+
+  const handleClosePaymentModal = () => {
+    setPaymentModalOpen(false)
+    navigate('/orders')
   }
 
   return (
@@ -148,6 +161,64 @@ export default function Cart() {
             Place Order
           </button>
         </div>
+
+        {/* Order Confirmation Modal */}
+        <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
+          <DialogTitle>Confirm Order</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Are you sure you want to place this order?
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                Total Amount: ₹{totalPrice}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Please contact our customer support at +91 1234567890 to make the payment.
+              </Typography>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseModal} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmOrder} color="success" variant="contained">
+              Confirm Order
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Payment Confirmation Modal */}
+        <Dialog open={paymentModalOpen} onClose={handleClosePaymentModal} maxWidth="sm" fullWidth>
+          <DialogTitle>Payment Confirmation</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Order Successfully Created!
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                Order ID: {orderId}
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                Total Amount: ₹{totalPrice}
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Please contact our customer support at +91 1234567890 to make the payment.
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                After payment, click "Confirm Payment" to update your order status.
+              </Typography>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClosePaymentModal} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handlePaymentConfirm} color="success" variant="contained">
+              Confirm Payment
+            </Button>
+          </DialogActions>
+        </Dialog>
       </div>
     </div>
   )
