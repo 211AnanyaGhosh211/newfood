@@ -6,51 +6,35 @@ import './App.css';
 import Home from './components/screens/Home';
 import Login from './components/screens/Login';
 import Signup from './components/screens/Signup';
-import Checkout from './components/screens/Checkout';
 import Logout from './components/screens/Logout';
 import ForgotPassword from './components/screens/ForgotPassword.js';
+import Orders from './components/screens/Orders';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import React, { useContext } from 'react';
 import { CartProvider } from './components/ContextReducer';
-import { PayPalScriptProvider } from '@paypal/react-paypal-js';
-
-
-
 import Navbar from './components/Navbar';
 function App() {
   return (
-    <CartProvider>
-      <PayPalScriptProvider 
-        options={{
-          "client-id": "sb",
-          "currency": "USD",
-          "intent": "capture",
-          "disable-funding": "credit",
-          "components": "buttons",
-          "vault": false,
-          "commit": true,
-          "debug": true,
-          "locale": "en_US",
-          "buyer-country": "US",
-          "merchant-country": "US",
-          "allowed-country-codes": ["US", "GB", "CA"],
-          "disable-card": true
-        }}
-      >
+    <div>
+      <CartProvider>
         <Router>
           <div>
             <Routes>
               <Route exact path="/" element={<Home />} />
               <Route exact path="/login" element={<Login />} />
               <Route exact path="/createuser" element={<Signup />} />
-              <Route exact path="/checkout" element={<Checkout />} />
               <Route exact path="/logout" element={<Logout />} />
               <Route exact path="/resetpassword" element={<ForgotPassword />} />
+              <Route exact path="/orders" element={<Orders />} />
+              <Route exact path="/myorders" element={<Orders />} />
             </Routes>
           </div>
         </Router>
-      </PayPalScriptProvider>
-    </CartProvider>
+      </CartProvider>
+      <ToastContainer position="top-right" autoClose={3000} />
+    </div>
   );
 }
 

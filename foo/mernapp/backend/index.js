@@ -27,9 +27,7 @@ mongoDB().then(() => {
     app.use('/api', require('./Routes/DisplayData'));
     app.use('/api', require('./Routes/OrderData'));
     app.use('/api', require('./Routes/ResetPassword'));
-    app.get('/api/config/paypal', (req, res) => {
-        res.send(process.env.PAYPAL_CLIENT_ID);
-    });
+
 
     app.listen(port, () => {
         console.log(`Server is running on port ${port}`);
