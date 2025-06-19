@@ -70,7 +70,7 @@ export default function Orders() {
             <div className='card-body'>
               <div className='d-flex justify-content-between align-items-center mb-3'>
                 <h5 className='card-title'>Order #{index + 1}</h5>
-                <span className={`badge ${order.status === 'Ordered' ? 'bg-success' : 'bg-warning'}`}>
+                <span className={`badge ${order.status === 'ordered' ? 'bg-success' : 'bg-warning'}`}>
                   {order.status || 'Pending'}
                 </span>
               </div>

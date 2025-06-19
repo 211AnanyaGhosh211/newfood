@@ -54,7 +54,7 @@ export default function Cart() {
     setOpenModal(true)
   }
 
-  const handleConfirmOrder = async () => {
+  const handleConfirmOrder = async (payLater = false) => {
     try {
       let userEmail = localStorage.getItem("userEmail")
       
@@ -67,7 +67,8 @@ export default function Cart() {
           order_data: data,
           email: userEmail,
           order_date: new Date().toDateString(),
-          total_amount: totalPrice
+          total_amount: totalPrice,
+          payLater: payLater
         })
       })
 
@@ -77,8 +78,17 @@ export default function Cart() {
 
       const orderData = await response.json()
       setOrderId(orderData.order_id)
-      setPaymentModalOpen(true)
       setOpenModal(false)
+
+      if (payLater) {
+        // For Pay Later, just show success message and navigate to orders
+        dispatch({ type: "DROP" })
+        toast.success('Order placed successfully! Your order is pending payment.')
+        navigate('/orders')
+      } else {
+        // For immediate payment, show payment modal
+        setPaymentModalOpen(true)
+      }
     } catch (error) {
       console.error('Error placing order:', error)
       toast.error('An error occurred. Please try again.')
@@ -168,13 +178,10 @@ export default function Cart() {
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography variant="h6" gutterBottom>
-                Are you sure you want to place this order?
+                Choose your payment option:
               </Typography>
               <Typography variant="body1" color="textSecondary">
                 Total Amount: ₹{totalPrice}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Please contact our customer support at +91 1234567890 to make the payment.
               </Typography>
             </Box>
           </DialogContent>
@@ -182,8 +189,11 @@ export default function Cart() {
             <Button onClick={handleCloseModal} color="primary">
               Cancel
             </Button>
-            <Button onClick={handleConfirmOrder} color="success" variant="contained">
-              Confirm Order
+            <Button onClick={() => handleConfirmOrder(true)} color="warning" variant="contained">
+              Pay Later
+            </Button>
+            <Button onClick={() => handleConfirmOrder(false)} color="success" variant="contained">
+              Confirm Payment
             </Button>
           </DialogActions>
         </Dialog>

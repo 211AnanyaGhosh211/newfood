@@ -17,8 +17,12 @@ router.post('/orderData', async (req, res) => {
             console.log("1231242343242354",req.body.email)
             await Order.create({
                 email: req.body.email,
-                order_data:[data],
-                total_amount: req.body.total_amount
+                order_data: data.map(item => ({
+                    ...item,
+                    status: req.body.payLater ? 'pending' : 'ordered'
+                })),
+                total_amount: req.body.total_amount,
+                status: req.body.payLater ? 'pending' : 'ordered'
             }).then(() => {
                 res.json({ success: true })
             })
@@ -31,7 +35,18 @@ router.post('/orderData', async (req, res) => {
     else {
         try {
             await Order.findOneAndUpdate({email:req.body.email},
-                { $push:{order_data: data}, $set: { total_amount: req.body.total_amount } }).then(() => {
+                { 
+                    $push: { 
+                        order_data: data.map(item => ({
+                            ...item,
+                            status: req.body.payLater ? 'pending' : 'ordered'
+                        }))
+                    }, 
+                    $set: { 
+                        total_amount: req.body.total_amount, 
+                        status: req.body.payLater ? 'pending' : 'ordered' 
+                    } 
+                }).then(() => {
                     res.json({ success: true })
                 })
         } catch (error) {
