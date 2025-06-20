@@ -68,9 +68,8 @@ router.post('/processPayment', async (req, res) => {
 
         // Update the specific order's status
         const updatedOrders = userOrders.order_data.map(order => {
-            // Each order is an array, first element contains Order_date
-            if (order[0] && order[0].Order_date === order_id) {
-                order[0].status = 'Ordered';
+            if (order.Order_date === order_id && order.status === 'pending') {
+                order.status = 'ordered';
             }
             return order;
         });
