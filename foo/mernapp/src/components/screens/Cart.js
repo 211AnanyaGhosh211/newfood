@@ -27,30 +27,13 @@ export default function Cart() {
     )
   }
 
-  const handleCheckOut = async () => {
-    let userEmail = localStorage.getItem("userEmail")
-    let response = await fetch("http://localhost:3000/api/orderData", {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        order_data: data,
-        email: userEmail,
-        order_date: new Date().toDateString()
-      })
-    })
-    console.log("Order response:", response.status)
-    return response
-  }
-
   let totalPrice = data.reduce((total, food) => {
     // Calculate price based on base price and quantity
     const basePrice = food.basePrice || food.price / food.qty;
     return total + (basePrice * food.qty);
   }, 0);
 
-  const handleOrderPlacement = async () => {
+  const handleOrderPlacement = () => {
     setOpenModal(true)
   }
 
@@ -66,7 +49,7 @@ export default function Cart() {
         body: JSON.stringify({
           order_data: data,
           email: userEmail,
-          order_date: new Date().toDateString(),
+          order_date: new Date().toISOString(), // Use ISO format for better consistency
           total_amount: totalPrice,
           payLater: payLater
         })
@@ -77,7 +60,8 @@ export default function Cart() {
       }
 
       const orderData = await response.json()
-      setOrderId(orderData.order_id)
+      // Set the order ID from the response
+      setOrderId(orderData.order_id || new Date().toISOString())
       setOpenModal(false)
 
       if (payLater) {
@@ -100,6 +84,10 @@ export default function Cart() {
     try {
       let userEmail = localStorage.getItem("userEmail")
       
+      if (!orderId) {
+        throw new Error('Order ID not found')
+      }
+
       const paymentResponse = await fetch("http://localhost:3000/api/processPayment", {
         method: 'POST',
         headers: {
@@ -112,16 +100,17 @@ export default function Cart() {
         })
       })
 
-      if (paymentResponse.ok) {
-        dispatch({ type: "DROP" })
-        toast.success('Order placed and payment confirmed!')
-        navigate('/orders')
-      } else {
-        toast.error('Payment confirmation failed. Please try again.')
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json()
+        throw new Error(errorData.error || 'Payment confirmation failed')
       }
+
+      dispatch({ type: "DROP" })
+      toast.success('Order placed and payment confirmed!')
+      navigate('/orders')
     } catch (error) {
       console.error('Error confirming payment:', error)
-      toast.error('An error occurred while confirming payment. Please try again.')
+      toast.error(error.message || 'An error occurred while confirming payment. Please try again.')
     } finally {
       setPaymentModalOpen(false)
     }
@@ -207,13 +196,13 @@ export default function Cart() {
                 Order Successfully Created!
               </Typography>
               <Typography variant="body1" color="textSecondary">
-                Order ID: {orderId}
+                Order Date: {orderId}
               </Typography>
               <Typography variant="body1" color="textSecondary">
                 Total Amount: ₹{totalPrice}
               </Typography>
               <Typography variant="body2" color="textSecondary">
-                Please contact our customer support at +91 1234567890 to make the payment.
+                Please contact our customer support at +91 8017611058 to make the payment.
               </Typography>
               <Typography variant="body2" color="textSecondary">
                 After payment, click "Confirm Payment" to update your order status.
@@ -221,9 +210,7 @@ export default function Cart() {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClosePaymentModal} color="primary">
-              Cancel
-            </Button>
+            
             <Button onClick={handlePaymentConfirm} color="success" variant="contained">
               Confirm Payment
             </Button>

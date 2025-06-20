@@ -2,59 +2,58 @@ const express = require('express')
 const router = express.Router()
 const Order = require('../models/Orders')
 
+// Ensure Mongoose is properly connected
+const mongoose = require('mongoose');
+if (!mongoose.connection.readyState) {
+    console.error('❌ MongoDB not connected!');
+    process.exit(1);
+}
+
 // Handle new order creation
 router.post('/orderData', async (req, res) => {
-    let data = req.body.order_data
-    await data.splice(0,0,{Order_date:req.body.order_date})
-    console.log("1231242343242354",req.body.email)
+    try {
+        const { email, order_data, order_date, total_amount, payLater } = req.body;
+        
+        if (!email || !order_data || !order_date || !total_amount) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
 
-    //if email not exisitng in db then create: else: InsertMany()
-    let eId = await Order.findOne({ 'email': req.body.email })    
-    console.log(eId)
-    if (eId===null) {
-        try {
-            console.log(data)
-            console.log("1231242343242354",req.body.email)
+        // Check if user exists
+        const existingOrder = await Order.findOne({ email });
+        
+        // Format the order data
+        const formattedOrder = {
+            Order_date: order_date,
+            total_amount: total_amount,
+            status: payLater ? 'pending' : 'ordered',
+            items: order_data
+        };
+
+        if (!existingOrder) {
+            // Create new order
             await Order.create({
-                email: req.body.email,
-                order_data: data.map(item => ({
-                    ...item,
-                    status: req.body.payLater ? 'pending' : 'ordered'
-                })),
-                total_amount: req.body.total_amount,
-                status: req.body.payLater ? 'pending' : 'ordered'
-            }).then(() => {
-                res.json({ success: true })
-            })
-        } catch (error) {
-            console.log(error.message)
-            res.send("Server Error", error.message)
+                email,
+                order_data: [formattedOrder],
+                total_amount,
+                status: payLater ? 'pending' : 'ordered'
+            });
+        } else {
+            // Update existing order
+            await Order.findOneAndUpdate(
+                { email },
+                {
+                    $push: { order_data: formattedOrder },
+                    $set: { total_amount, status: payLater ? 'pending' : 'ordered' }
+                }
+            );
         }
-    }
 
-    else {
-        try {
-            await Order.findOneAndUpdate({email:req.body.email},
-                { 
-                    $push: { 
-                        order_data: data.map(item => ({
-                            ...item,
-                            status: req.body.payLater ? 'pending' : 'ordered'
-                        }))
-                    }, 
-                    $set: { 
-                        total_amount: req.body.total_amount, 
-                        status: req.body.payLater ? 'pending' : 'ordered' 
-                    } 
-                }).then(() => {
-                    res.json({ success: true })
-                })
-        } catch (error) {
-            console.log(error.message)
-            res.send("Server Error", error.message)
-        }
+        res.json({ success: true, order_id: order_date });
+    } catch (error) {
+        console.error('Error creating order:', error);
+        res.status(500).json({ error: 'Failed to create order' });
     }
-})
+});
 
 // Process payment and update order status
 router.post('/processPayment', async (req, res) => {
@@ -69,9 +68,9 @@ router.post('/processPayment', async (req, res) => {
 
         // Update the specific order's status
         const updatedOrders = userOrders.order_data.map(order => {
-            if (order[0].Order_date === order_id) { // Using Order_date as ID since we don't have a unique ID
+            // Each order is an array, first element contains Order_date
+            if (order[0] && order[0].Order_date === order_id) {
                 order[0].status = 'Ordered';
-                return order;
             }
             return order;
         });
@@ -90,83 +89,41 @@ router.post('/processPayment', async (req, res) => {
 });
 
 // Get user orders with status
-router.post('/orders', async (req, res) => {
+router.get('/orderData', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email } = req.query;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        console.log('Fetching orders for email:', email);
+        
         const orders = await Order.findOne({ email });
+        console.log('Orders found:', orders ? orders.order_data.length : 0);
         
         if (!orders) {
+            console.log('No orders found for this user');
             return res.json([]);
         }
 
         // Format orders data with status
-        const formattedOrders = orders.order_data.map((orderData, index) => ({
-            order_date: orderData[0].Order_date,
-            total_amount: orderData[0].total_amount || orders.total_amount,
-            order_data: orderData.slice(1),
-            status: orderData[0].status || 'Pending',
+        const formattedOrders = orders.order_data.map((order, index) => ({
+            order_date: order.Order_date,
+            total_amount: order.total_amount,
+            order_data: order.items,
+            status: order.status,
             id: index + 1
         }));
 
+        console.log('Formatted orders:', formattedOrders);
         res.json(formattedOrders);
     } catch (error) {
         console.error('Error fetching orders:', error);
-        res.status(500).json({ error: 'Failed to fetch orders' });
+        res.status(500).json({ 
+            error: 'Failed to fetch orders', 
+            details: error.message 
+        });
     }
 });
 
-// Get user orders with status
-router.post('/orders', async (req, res) => {
-    try {
-        const { email } = req.body;
-        const orders = await Order.findOne({ email });
-        
-        if (!orders) {
-            return res.json([]);
-        }
-
-        // Format orders data
-        const formattedOrders = orders.order_data.map((orderData, index) => ({
-            order_date: orderData[0].Order_date,
-            total_amount: orders.total_amount,
-            order_data: orderData.slice(1),
-            status: orderData.status || 'Pending',
-            id: index + 1
-        }));
-
-        res.json(formattedOrders);
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ error: 'Failed to fetch orders' });
-    }
-});
-
-module.exports = router
-
-// Get user orders
-router.post('/orders', async (req, res) => {
-    try {
-        const { email } = req.body;
-        const orders = await Order.findOne({ email });
-        
-        if (!orders) {
-            return res.json([]);
-        }
-
-        // Format orders data
-        const formattedOrders = orders.order_data.map((orderData, index) => ({
-            order_date: orderData[0].Order_date,
-            total_amount: orders.total_amount,
-            order_data: orderData.slice(1),
-            status: 'Pending',
-            id: index + 1
-        }));
-
-        res.json(formattedOrders);
-    } catch (error) {
-        console.error('Error fetching orders:', error);
-        res.status(500).json({ error: 'Failed to fetch orders' });
-    }
-});
-
-module.exports = router
+module.exports = router;

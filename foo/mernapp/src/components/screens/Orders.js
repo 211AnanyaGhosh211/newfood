@@ -14,24 +14,34 @@ export default function Orders() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/orders', {
-        method: 'POST',
+      if (!userEmail) {
+        throw new Error('User not logged in');
+      }
+
+      const response = await fetch(`http://localhost:3000/api/orderData?email=${encodeURIComponent(userEmail)}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: userEmail }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch orders');
+      }
+
       const data = await response.json();
-      // Update each order with its status
-      const updatedOrders = data.map(order => ({
-        ...order,
-        status: order.status || 'Pending'
-      }));
-      setOrders(updatedOrders);
+      console.log('Received orders data:', data); // Add logging
+      
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        setOrders([]);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Error fetching orders:', error);
+      toast.error(error.message || 'Failed to fetch your orders. Please try again.');
       setLoading(false);
     }
   };
